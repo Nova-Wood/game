@@ -2,40 +2,54 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>明堂司历 - 岁时抽卡模拟器 V5.0 终极兼容版</title>
+    <title>明堂司历 - 岁时抽卡模拟器 V7.0</title>
     <style>
-        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; text-align: center; padding: 20px; margin: 0; }
-        h1 { color: #8bc34a; transition: color 0.5s; }
-        #debug-status { background: #ff9800; color: #fff; padding: 10px; font-weight: bold; margin-bottom: 20px; border-radius: 5px; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
+        h1 { color: #8bc34a; transition: color 0.5s; text-align: center; }
         
-        .controls { margin: 20px auto; background: #2c2c2c; padding: 20px; border-radius: 10px; max-width: 800px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .controls { margin: 0 auto 20px; background: #2c2c2c; padding: 20px; border-radius: 10px; max-width: 800px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; }
         select { padding: 10px; font-size: 16px; margin-right: 15px; border-radius: 5px; background: #333; color: white; border: 1px solid #555; outline: none; }
-        button { padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer; background-color: #4caf50; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        button:hover { background-color: #45a049; }
+        button { padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer; background-color: #4caf50; color: white; border: none; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #45a049; transform: scale(1.05); }
         .btn-wiki { background-color: #2196f3; }
         .btn-wiki:hover { background-color: #1976d2; }
         .btn-clear { background-color: #f44336; font-size: 12px; padding: 5px 10px; margin-top: 10px; }
         
         #pool-desc { margin-top: 15px; font-size: 14px; color: #bbb; }
         
-        #game-container { max-width: 1200px; margin: 0 auto; }
-        .view-section { display: none; padding: 20px 0; }
-        .view-section.active { display: block; }
+        #game-layout { display: flex; max-width: 1300px; margin: 0 auto; gap: 20px; align-items: flex-start; }
+        #main-content { flex: 3; background: #222; border-radius: 10px; padding: 20px; min-height: 600px; }
+        #sidebar { flex: 1; background: #2c2c2c; border-radius: 10px; padding: 20px; border: 2px solid #555; position: sticky; top: 20px; text-align: center; }
+        
+        .score-board { font-size: 18px; color: #fff; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed #555; line-height: 1.8; }
+        .score-val { color: #ffeb3b; font-weight: bold; font-size: 22px; }
+        .rank-val { font-weight: bold; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        
+        .question-box { background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #8bc34a; font-size: 16px; line-height: 1.5; margin-bottom: 15px; text-align: left; }
+        .qa-tip { font-size: 12px; color: #aaa; margin-bottom: 15px; }
+        #qa-feedback { min-height: 24px; font-weight: bold; margin-top: 10px; }
+        .feedback-success { color: #4caf50; }
+        .feedback-error { color: #f44336; }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; text-align: center; }
         
         .card-grid { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
-        .card { width: 220px; background-color: #2c2c2c; border-radius: 10px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #555; text-align: left; position: relative; overflow: hidden; margin: 10px; }
-        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .card { width: 200px; background-color: #2c2c2c; border-radius: 10px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #555; text-align: left; position: relative; overflow: hidden; margin: 10px; transition: 0.2s; }
+        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
         .card-type { font-size: 12px; color: #aaa; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .card-desc { font-size: 14px; margin-bottom: 10px; line-height: 1.4; color: #ddd; }
+        .card-desc { font-size: 13px; margin-bottom: 10px; line-height: 1.4; color: #ddd; }
         .card-quote { font-size: 12px; color: #8bc34a; font-style: italic; }
         
-        .wiki-card { transform: scale(0.9); }
-        .locked { filter: grayscale(100%); opacity: 0.5; border-color: #333; }
-        .locked-text { position: absolute; top: 50%; left: 0; right: 0; text-align: center; margin-top: -12px; font-size: 24px; color: #fff; font-weight: bold; pointer-events: none; }
-        .count-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .wiki-card { transform: scale(0.95); cursor: pointer; }
+        .wiki-card:hover { transform: scale(1); border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .locked { filter: grayscale(100%); opacity: 0.5; border-color: #333 !important; cursor: not-allowed; }
+        .locked:hover { transform: scale(0.95); box-shadow: none; }
+        .locked-text { position: absolute; top: 50%; left: 0; right: 0; text-align: center; margin-top: -12px; font-size: 20px; color: #fff; font-weight: bold; pointer-events: none; }
+        .count-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.8); color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; }
         
         .progress-container { width: 80%; margin: 20px auto; background: #333; border-radius: 10px; overflow: hidden; border: 1px solid #555; }
-        .progress-bar { height: 20px; background: #4caf50; width: 0%; }
+        .progress-bar { height: 15px; background: #4caf50; width: 0%; transition: width 0.5s; }
         .progress-text { margin-top: 5px; font-size: 14px; }
 
         .UR { border-color: #ff5722; background: #3a2311; }
@@ -46,8 +60,6 @@
     </style>
 </head>
 <body>
-
-    <div id="debug-status">⏳ 正在启动司历阵法... (如果此条提示一直显示，请确保文件保存为UTF-8编码，或更换Chrome/Edge浏览器打开)</div>
 
     <h1 id="main-title">📜 明堂司历：岁时抽卡模拟器</h1>
     
@@ -60,34 +72,80 @@
         </select>
         <button id="btn-draw-1">观星 (单抽)</button>
         <button id="btn-draw-10">连观十星 (十连)</button>
-        <button id="btn-show-wiki" class="btn-wiki">📖 藏书阁 (图鉴)</button>
+        <button id="btn-show-wiki" class="btn-wiki">📖 藏书阁 (答题区)</button>
         <button id="btn-show-gacha" class="btn-wiki" style="background-color: #607d8b;">🌌 返回明堂</button>
         <div id="pool-desc">当前卡池：万物复苏，东方青气极盛。UP神明：太皞、句芒。</div>
     </div>
 
-    <div id="game-container">
-        <div id="gacha-view" class="view-section active">
-            <h2 style="color: #ccc; border-bottom: 1px solid #444; padding-bottom: 10px;">🌠 观星结果</h2>
-            <div id="result-area" class="card-grid"></div>
+    <div id="game-layout">
+        <div id="main-content">
+            <div id="gacha-view" class="view-section active">
+                <h2 style="color: #ccc; border-bottom: 1px solid #444; padding-bottom: 10px;">🌠 观星结果</h2>
+                <div id="result-area" class="card-grid"></div>
+            </div>
+
+            <div id="wiki-view" class="view-section">
+                <h2 style="color: #ccc;">📖 月令万物图鉴</h2>
+                <div class="progress-text">收集进度：<span id="collection-count">0</span> / <span id="total-count">0</span></div>
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <div style="color: #8bc34a; font-size: 14px; margin-bottom: 10px;">💡 提示：在面临提问时，点击已点亮的卡牌即可提交答案！</div>
+                <button id="btn-clear-save" class="btn-clear">⚠️ 清空游戏进度</button>
+                <div id="wiki-area" class="card-grid"></div>
+            </div>
         </div>
 
-        <div id="wiki-view" class="view-section">
-            <h2 style="color: #ccc;">📖 月令万物图鉴</h2>
-            <div class="progress-text">收集进度：<span id="collection-count">0</span> / <span id="total-count">0</span></div>
-            <div class="progress-container">
-                <div id="progress-bar" class="progress-bar"></div>
+        <div id="sidebar">
+            <h2 style="margin-top: 0; color: #ffeb3b;">🏛️ 天机阁</h2>
+            <div class="score-board">
+                官阶：<span id="rank-display" class="rank-val">布衣学童</span><br>
+                灵力：<span id="score-display" class="score-val">0</span>
             </div>
-            <button id="btn-clear-save" class="btn-clear">⚠️ 清空进度</button>
-            <div id="wiki-area" class="card-grid"></div>
+            
+            <div style="font-size: 14px; color: #ccc; text-align: left; margin-bottom: 5px;">来自天子的考校：</div>
+            <div class="question-box" id="question-text">
+                正在翻阅书简，准备考题...
+            </div>
+            
+            <div class="qa-tip">👉 请前往 [藏书阁] 点击对应卡牌作答</div>
+            <button id="btn-skip-question" style="font-size: 12px; padding: 5px 10px; background-color: #555;">换一道题</button>
+            
+            <div id="qa-feedback"></div>
         </div>
     </div>
 
     <script>
-        // 全局错误捕获，如果代码崩溃，会弹窗报警
-        window.onerror = function(msg, url, line) {
-            alert("代码运行出错了！\n错误信息：" + msg + "\n行号：" + line + "\n请将此截图发给AI助手。");
-        };
+        // === 1. 全新扩充题库 (25题) ===
+        var qaBank = [
+            { q: "太史令，孟春之月，天子祭祀户神时，祭品中应以什么脏器为尊？", a: "祀户祭脾" },
+            { q: "季冬之月，万物闭藏。天子会举行哪项盛大的年终祭祀，来合祭祖先与五祀神？", a: "腊先祖五祀" },
+            { q: "秋季五行属金，其对应的音律和味道分别是什么？", a: "商音与辛味" },
+            { q: "立夏之日，天子应当率领三公九卿去何处迎接夏气？", a: "迎夏于南郊" },
+            { q: "中央五行属土，主宰中央的天帝是黄帝，那么辅佐他的佐神是哪一位？", a: "神后土" },
+            { q: "仲春之月，燕子归来。此时天子会举行什么国家大典来祈求子嗣？", a: "祠于高禖" },
+            { q: "秋季万物肃杀，负责掌管这肃杀之气的秋季佐神是谁？", a: "神蓐收" },
+            { q: "初夏时节，田野里会开满哪一种植物的花朵，标志着孟夏的到来？", a: "苦菜秀" },
+            { q: "为了顺应冬藏之气，天子在冬季的哪项国家大典中会抚恤孤儿寡母？", a: "恤孤寡" },
+            { q: "季春之月，水面会开始长出什么植物，标志着水生生态的复苏？", a: "萍始生" },
+            { q: "仲夏天子居于明堂南堂的正室，此居所名叫什么？", a: "明堂太庙" },
+            { q: "冬季属水，其对应的五音与五味是什么？", a: "羽音与咸味" },
+            { q: "春季五行属木，主宰东方与春季的最高神明是哪一位？", a: "帝太皞" },
+            { q: "孟冬之月，水面开始结冰，大地冻结。这一物候被称作什么？", a: "水始冰" },
+            { q: "季秋之月，菊花开出黄色的花朵，这是秋季典型的物候，名为？", a: "鞠有黄华" },
+            { q: "仲夏之月，为了祈求甘雨，天子会举行什么盛大的音乐祭祀大典？", a: "大雩帝" },
+            { q: "秋天的时候，为了赡养衰老之人，天子会举行什么大典赐予老人手杖？", a: "授几杖" },
+            { q: "立冬之日，天子率领百官去往何处迎接冬气？", a: "迎冬于北郊" },
+            { q: "仲秋之月，燕子感知到肃杀之气，开始向南方迁徙。这叫什么物候？", a: "玄鸟归" },
+            { q: "季秋时节，天子教习武备，演练五种兵器。这是什么大典？", a: "教于田猎" },
+            { q: "季春之月，后妃需要斋戒，并亲自向东方采摘桑叶，以劝勉蚕事。这叫什么大典？", a: "后妃躬桑" },
+            { q: "仲冬之月，阴气极盛，阳气微动，哪一种猛兽开始交配？", a: "虎始交" },
+            { q: "季夏之月，腐朽的草化作了夏夜的飞虫，这是什么物候？", a: "腐草为萤" },
+            { q: "主宰中央的最高神明是黄帝，五行属土。那么对应他的天帝卡牌是？", a: "帝黄帝" },
+            { q: "春天冬眠的虫子开始苏醒，标志着孟春的到来，这叫什么？", a: "蛰虫始振" }
+        ];
 
+        // === 2. 卡池数据 ===
         var gachaPools = {
             spring: [
                 { name: "帝太皞", rarity: "UR", type: "春季天帝", desc: "主宰东方与春季的最高神明，五行属木。", quote: "其帝大皞", weight: 1 },
@@ -144,7 +202,7 @@
         };
 
         var allUniqueCards = [];
-        var cardNames = {}; // 记录名字防止重复
+        var cardNames = {}; 
         for (var season in gachaPools) {
             var pool = gachaPools[season];
             for (var i = 0; i < pool.length; i++) {
@@ -161,24 +219,96 @@
             return rarityOrder[a.rarity] - rarityOrder[b.rarity];
         });
 
+        // === 3. 游戏存档与状态 ===
         var inventory = {};
+        var currentQuestion = null;
+        var feedbackTimeout = null;
+
+        function updateRankDisplay() {
+            var score = inventory.score || 0;
+            var rankName = "布衣学童";
+            var rankColor = "#9e9e9e";
+
+            if (score >= 1000) { rankName = "大宗伯"; rankColor = "#ff5722"; } // UR级
+            else if (score >= 600) { rankName = "太史令"; rankColor = "#ffc107"; } // SSR级
+            else if (score >= 300) { rankName = "太史丞"; rankColor = "#9c27b0"; } // SR级
+            else if (score >= 100) { rankName = "司历官"; rankColor = "#03a9f4"; } // R级
+            else if (score >= 50)  { rankName = "灵台郎"; rankColor = "#8bc34a"; } // 见习级
+
+            var rankEl = document.getElementById('rank-display');
+            rankEl.innerText = rankName;
+            rankEl.style.color = rankColor;
+            document.getElementById('score-display').innerText = score;
+        }
+
         function loadInventory() {
             try {
                 var savedData = localStorage.getItem('mingtang_inventory');
                 if (savedData) {
                     inventory = JSON.parse(savedData);
                 }
+                if (typeof inventory.score === 'undefined') {
+                    inventory.score = 0;
+                }
+                updateRankDisplay();
             } catch (e) {
-                inventory = {};
+                inventory = { score: 0 };
             }
         }
 
         function saveInventory() {
             try {
                 localStorage.setItem('mingtang_inventory', JSON.stringify(inventory));
+                updateRankDisplay();
             } catch (e) {}
         }
 
+        // === 4. 问答核心逻辑 ===
+        function generateNewQuestion() {
+            var randIndex = Math.floor(Math.random() * qaBank.length);
+            currentQuestion = qaBank[randIndex];
+            document.getElementById('question-text').innerText = currentQuestion.q;
+            document.getElementById('qa-feedback').innerText = "";
+        }
+
+        function showFeedback(msg, isSuccess) {
+            var fbDiv = document.getElementById('qa-feedback');
+            fbDiv.innerText = msg;
+            fbDiv.className = isSuccess ? 'feedback-success' : 'feedback-error';
+            
+            clearTimeout(feedbackTimeout);
+            feedbackTimeout = setTimeout(function() {
+                fbDiv.innerText = "";
+            }, 3000);
+        }
+
+        function handleCardClick(cardName, isLocked) {
+            if (document.getElementById('wiki-view').style.display !== 'block') return;
+            
+            if (isLocked) {
+                showFeedback("❌ 此卡牌尚未解锁，无法提交！请先去明堂观星。", false);
+                return;
+            }
+
+            if (!currentQuestion) return;
+
+            if (cardName === currentQuestion.a) {
+                inventory.score += 20;
+                saveInventory();
+                showFeedback("✅ 回答正确！灵力 +20", true);
+                
+                // 检查是否升级并弹窗祝贺 (可选的小彩蛋)
+                if ([50, 100, 300, 600, 1000].indexOf(inventory.score) !== -1) {
+                    setTimeout(function() { alert("🎉 恭喜！你的官职获得了晋升！"); }, 500);
+                }
+
+                setTimeout(generateNewQuestion, 1500);
+            } else {
+                showFeedback("❌ 答案不对哦，太史令请再仔细想想，或者看看卡牌描述。", false);
+            }
+        }
+
+        // === 5. UI 渲染与交互 ===
         function updateTheme() {
             var selector = document.getElementById('pool-selector');
             var desc = document.getElementById('pool-desc');
@@ -213,33 +343,32 @@
         function getRandomCard(poolName) {
             var pool = gachaPools[poolName];
             var totalWeight = 0;
-            for (var i = 0; i < pool.length; i++) {
-                totalWeight += pool[i].weight;
-            }
-            
+            for (var i = 0; i < pool.length; i++) { totalWeight += pool[i].weight; }
             var randomNum = Math.random() * totalWeight;
             var weightSum = 0;
-            
             for (var j = 0; j < pool.length; j++) {
                 weightSum += pool[j].weight;
-                if (randomNum <= weightSum) {
-                    return pool[j];
-                }
+                if (randomNum <= weightSum) return pool[j];
             }
-            return pool[0]; // 兜底
+            return pool[0]; 
         }
 
         function generateCardHTML(card, isWiki) {
             var count = inventory[card.name] || 0;
+            var isLocked = isWiki && count === 0;
             var html = '<div class="card ' + card.rarity + ' ';
             
             if (isWiki) {
                 html += 'wiki-card ';
-                if (count === 0) {
-                    html += 'locked ';
-                }
+                if (isLocked) html += 'locked ';
             }
-            html += '">';
+            html += '" data-name="' + card.name + '" ';
+            
+            if (isWiki) {
+                html += 'onclick="handleCardClick(\'' + card.name + '\', ' + isLocked + ')"';
+            }
+            
+            html += '>';
             
             if (isWiki && count > 0) {
                 html += '<div class="count-badge">已收集: ' + count + '</div>';
@@ -265,9 +394,7 @@
 
             for (var i = 0; i < times; i++) {
                 var card = getRandomCard(poolName);
-                if (!inventory[card.name]) {
-                    inventory[card.name] = 0;
-                }
+                if (!inventory[card.name]) { inventory[card.name] = 0; }
                 inventory[card.name]++;
                 resultArea.innerHTML += generateCardHTML(card, false);
             }
@@ -282,9 +409,7 @@
             for (var i = 0; i < allUniqueCards.length; i++) {
                 var card = allUniqueCards[i];
                 wikiArea.innerHTML += generateCardHTML(card, true);
-                if (inventory[card.name]) {
-                    unlockedCount++;
-                }
+                if (inventory[card.name]) { unlockedCount++; }
             }
 
             var totalCount = allUniqueCards.length;
@@ -295,25 +420,26 @@
             document.getElementById('progress-bar').style.width = percentage + '%';
         }
 
-        // 初始化：隐藏调试提示并绑定按钮事件
+        // 初始化
         window.onload = function() {
-            document.getElementById('debug-status').style.display = 'none';
             loadInventory();
             updateTheme();
             renderWiki();
+            generateNewQuestion();
             
-            // 绑定事件
             document.getElementById('pool-selector').onchange = updateTheme;
             document.getElementById('btn-draw-1').onclick = function() { draw(1); };
             document.getElementById('btn-draw-10').onclick = function() { draw(10); };
             document.getElementById('btn-show-wiki').onclick = function() { toggleView('wiki-view'); };
             document.getElementById('btn-show-gacha').onclick = function() { toggleView('gacha-view'); };
+            document.getElementById('btn-skip-question').onclick = generateNewQuestion;
             document.getElementById('btn-clear-save').onclick = function() {
-                if(confirm("确定要清空所有的收集进度吗？这无法撤销！")) {
+                if(confirm("确定要清空所有的收集进度和灵力吗？这无法撤销！")) {
                     try { localStorage.removeItem('mingtang_inventory'); } catch (e) {}
-                    inventory = {};
+                    inventory = { score: 0 };
                     renderWiki();
-                    alert("已清空存档。");
+                    updateRankDisplay();
+                    alert("已清空进度，重新开始修行。");
                 }
             };
         };
