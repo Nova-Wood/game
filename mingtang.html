@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>明堂司历 - 岁时抽卡模拟器 V5.0 终极兼容版</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; text-align: center; padding: 20px; margin: 0; }
+        h1 { color: #8bc34a; transition: color 0.5s; }
+        #debug-status { background: #ff9800; color: #fff; padding: 10px; font-weight: bold; margin-bottom: 20px; border-radius: 5px; }
+        
+        .controls { margin: 20px auto; background: #2c2c2c; padding: 20px; border-radius: 10px; max-width: 800px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        select { padding: 10px; font-size: 16px; margin-right: 15px; border-radius: 5px; background: #333; color: white; border: 1px solid #555; outline: none; }
+        button { padding: 10px 20px; font-size: 16px; margin: 0 5px; cursor: pointer; background-color: #4caf50; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background-color: #45a049; }
+        .btn-wiki { background-color: #2196f3; }
+        .btn-wiki:hover { background-color: #1976d2; }
+        .btn-clear { background-color: #f44336; font-size: 12px; padding: 5px 10px; margin-top: 10px; }
+        
+        #pool-desc { margin-top: 15px; font-size: 14px; color: #bbb; }
+        
+        #game-container { max-width: 1200px; margin: 0 auto; }
+        .view-section { display: none; padding: 20px 0; }
+        .view-section.active { display: block; }
+        
+        .card-grid { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .card { width: 220px; background-color: #2c2c2c; border-radius: 10px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #555; text-align: left; position: relative; overflow: hidden; margin: 10px; }
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .card-type { font-size: 12px; color: #aaa; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .card-desc { font-size: 14px; margin-bottom: 10px; line-height: 1.4; color: #ddd; }
+        .card-quote { font-size: 12px; color: #8bc34a; font-style: italic; }
+        
+        .wiki-card { transform: scale(0.9); }
+        .locked { filter: grayscale(100%); opacity: 0.5; border-color: #333; }
+        .locked-text { position: absolute; top: 50%; left: 0; right: 0; text-align: center; margin-top: -12px; font-size: 24px; color: #fff; font-weight: bold; pointer-events: none; }
+        .count-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        
+        .progress-container { width: 80%; margin: 20px auto; background: #333; border-radius: 10px; overflow: hidden; border: 1px solid #555; }
+        .progress-bar { height: 20px; background: #4caf50; width: 0%; }
+        .progress-text { margin-top: 5px; font-size: 14px; }
+
+        .UR { border-color: #ff5722; background: #3a2311; }
+        .SSR { border-color: #ffc107; }
+        .SR { border-color: #9c27b0; }
+        .R { border-color: #03a9f4; }
+        .N { border-color: #9e9e9e; }
+    </style>
+</head>
+<body>
+
+    <div id="debug-status">⏳ 正在启动司历阵法... (如果此条提示一直显示，请确保文件保存为UTF-8编码，或更换Chrome/Edge浏览器打开)</div>
+
+    <h1 id="main-title">📜 明堂司历：岁时抽卡模拟器</h1>
+    
+    <div class="controls">
+        <select id="pool-selector">
+            <option value="spring">🌸 春之卷 (木·青·角音)</option>
+            <option value="summer">☀️ 夏之卷 (火·赤·征音)</option>
+            <option value="autumn">🍁 秋之卷 (金·白·商音)</option>
+            <option value="winter">❄️ 冬之卷 (水·黑·羽音)</option>
+        </select>
+        <button id="btn-draw-1">观星 (单抽)</button>
+        <button id="btn-draw-10">连观十星 (十连)</button>
+        <button id="btn-show-wiki" class="btn-wiki">📖 藏书阁 (图鉴)</button>
+        <button id="btn-show-gacha" class="btn-wiki" style="background-color: #607d8b;">🌌 返回明堂</button>
+        <div id="pool-desc">当前卡池：万物复苏，东方青气极盛。UP神明：太皞、句芒。</div>
+    </div>
+
+    <div id="game-container">
+        <div id="gacha-view" class="view-section active">
+            <h2 style="color: #ccc; border-bottom: 1px solid #444; padding-bottom: 10px;">🌠 观星结果</h2>
+            <div id="result-area" class="card-grid"></div>
+        </div>
+
+        <div id="wiki-view" class="view-section">
+            <h2 style="color: #ccc;">📖 月令万物图鉴</h2>
+            <div class="progress-text">收集进度：<span id="collection-count">0</span> / <span id="total-count">0</span></div>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <button id="btn-clear-save" class="btn-clear">⚠️ 清空进度</button>
+            <div id="wiki-area" class="card-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局错误捕获，如果代码崩溃，会弹窗报警
+        window.onerror = function(msg, url, line) {
+            alert("代码运行出错了！\n错误信息：" + msg + "\n行号：" + line + "\n请将此截图发给AI助手。");
+        };
+
+        var gachaPools = {
+            spring: [
+                { name: "帝太皞", rarity: "UR", type: "春季天帝", desc: "主宰东方与春季的最高神明，五行属木。", quote: "其帝大皞", weight: 1 },
+                { name: "神句芒", rarity: "UR", type: "春季佐神", desc: "太皞的辅佐神，掌管草木萌发。", quote: "其神句芒", weight: 2 },
+                { name: "迎春于东郊", rarity: "SSR", type: "国家大典", desc: "立春之日，天子率百官迎春气。", quote: "迎春于东郊", weight: 5 },
+                { name: "祠于高禖", rarity: "SSR", type: "国家大典", desc: "天子祭祀求子之神。", quote: "以大牢祠于高禖", weight: 5 },
+                { name: "后妃躬桑", rarity: "SSR", type: "国家大典", desc: "后妃斋戒，亲向东方采桑。", quote: "后妃齐戒，亲东乡躬桑", weight: 5 },
+                { name: "青阳大庙", rarity: "SR", type: "天子居所", desc: "天子春季居于明堂东堂。", quote: "天子居青阳大庙", weight: 12 },
+                { name: "蛰虫始振", rarity: "R", type: "孟春物候", desc: "冬眠的虫子开始苏醒。", quote: "蛰虫始振", weight: 20 },
+                { name: "桃始华", rarity: "R", type: "仲春物候", desc: "桃花始开，带来春意。", quote: "桃始华", weight: 20 },
+                { name: "萍始生", rarity: "R", type: "季春物候", desc: "水面开始长出浮萍。", quote: "萍始生", weight: 20 },
+                { name: "角音与酸味", rarity: "N", type: "五行属性", desc: "春季属木，对应角音与酸味。", quote: "其音角...其味酸", weight: 40 },
+                { name: "祀户祭脾", rarity: "N", type: "祭祀制度", desc: "春季祭户神，祭品以脾脏为尊。", quote: "其祀户，祭先脾", weight: 40 }
+            ],
+            summer: [
+                { name: "帝炎帝", rarity: "UR", type: "夏季天帝", desc: "主宰南方与夏季的最高神。", quote: "其帝炎帝", weight: 1 },
+                { name: "神祝融", rarity: "UR", type: "夏季佐神", desc: "炎帝的辅佐神，掌管生长与火。", quote: "其神祝融", weight: 2 },
+                { name: "帝黄帝", rarity: "UR", type: "中央天帝", desc: "主宰中央的最高神明，五行属土。", quote: "其帝黄帝", weight: 1 },
+                { name: "神后土", rarity: "UR", type: "中央佐神", desc: "大地之母，黄帝的辅佐神。", quote: "其神后土", weight: 2 },
+                { name: "迎夏于南郊", rarity: "SSR", type: "国家大典", desc: "立夏之日，天子率百官迎夏气。", quote: "迎夏于南郊", weight: 5 },
+                { name: "大雩帝", rarity: "SSR", type: "仲夏大典", desc: "仲夏举行盛大音乐祭祀祈雨。", quote: "大雩帝，用盛乐", weight: 5 },
+                { name: "明堂太庙", rarity: "SR", type: "天子居所", desc: "天子夏季居于明堂南堂。", quote: "天子居明堂太庙", weight: 12 },
+                { name: "苦菜秀", rarity: "R", type: "孟夏物候", desc: "苦菜在田野中开花茂盛。", quote: "苦菜秀", weight: 20 },
+                { name: "腐草为萤", rarity: "R", type: "季夏物候", desc: "腐朽的草化作了夏夜的萤火虫。", quote: "腐草为萤", weight: 20 },
+                { name: "祀灶祭肺", rarity: "N", type: "祭祀制度", desc: "夏季祭灶神，祭品以肺脏为尊。", quote: "其祀灶，祭先肺", weight: 40 },
+                { name: "宫音与甘味", rarity: "N", type: "五行属性", desc: "中央属土，对应宫音与甜味。", quote: "其音宫...其味甘", weight: 40 }
+            ],
+            autumn: [
+                { name: "帝少皞", rarity: "UR", type: "秋季天帝", desc: "主宰西方与秋季的最高神明，五行属金。", quote: "其帝少皞", weight: 1 },
+                { name: "神蓐收", rarity: "UR", type: "秋季佐神", desc: "少皞的辅佐神，掌管秋之肃杀。", quote: "其神蓐收", weight: 2 },
+                { name: "迎秋于西郊", rarity: "SSR", type: "国家大典", desc: "立秋之日，天子率百官迎秋气。", quote: "迎秋于西郊", weight: 5 },
+                { name: "授几杖", rarity: "SSR", type: "仲秋大典", desc: "赡养衰老之人，赐予手杖。", quote: "养衰老，授几杖", weight: 5 },
+                { name: "教于田猎", rarity: "SSR", type: "季秋大典", desc: "天子教习田猎，演练五种兵器。", quote: "教于田猎，以习五戎", weight: 5 },
+                { name: "总章大庙", rarity: "SR", type: "天子居所", desc: "天子秋季居于明堂西堂。", quote: "天子居总章大庙", weight: 12 },
+                { name: "凉风至", rarity: "R", type: "孟秋物候", desc: "秋风送爽，白露开始降落。", quote: "凉风至，白露降", weight: 20 },
+                { name: "玄鸟归", rarity: "R", type: "仲秋物候", desc: "燕子开始向南方迁徙归去。", quote: "玄鸟归", weight: 20 },
+                { name: "鞠有黄华", rarity: "R", type: "季秋物候", desc: "菊花开出黄色的花朵。", quote: "鞠有黄华", weight: 20 },
+                { name: "商音与辛味", rarity: "N", type: "五行属性", desc: "秋季属金，对应商音与辛味（辣）。", quote: "其音商...其味辛", weight: 40 },
+                { name: "祀门祭肝", rarity: "N", type: "祭祀制度", desc: "秋季祭门神，祭品以肝脏为尊。", quote: "其祀门，祭先肝", weight: 40 }
+            ],
+            winter: [
+                { name: "帝颛顼", rarity: "UR", type: "冬季天帝", desc: "主宰北方与冬季的最高神明，五行属水。", quote: "其帝颛顼", weight: 1 },
+                { name: "神玄冥", rarity: "UR", type: "冬季佐神", desc: "颛顼的辅佐神，掌管冬之闭藏。", quote: "其神玄冥", weight: 2 },
+                { name: "迎冬于北郊", rarity: "SSR", type: "国家大典", desc: "立冬之日，天子率百官迎冬气。", quote: "迎冬于北郊", weight: 5 },
+                { name: "恤孤寡", rarity: "SSR", type: "国家大典", desc: "赏赐为国牺牲者，抚恤孤儿寡母。", quote: "赏死事，恤孤寡", weight: 5 },
+                { name: "腊先祖五祀", rarity: "SSR", type: "季冬大典", desc: "年终大祭，合祭祖先与五祀神。", quote: "腊先祖五祀", weight: 5 },
+                { name: "玄堂大庙", rarity: "SR", type: "天子居所", desc: "天子冬季居于明堂北堂（玄堂）。", quote: "天子居玄堂大庙", weight: 12 },
+                { name: "水始冰", rarity: "R", type: "孟冬物候", desc: "水面开始结冰，大地冻结。", quote: "水始冰，地始冻", weight: 20 },
+                { name: "虎始交", rarity: "R", type: "仲冬物候", desc: "阴气极盛，阳气微动，老虎开始交配。", quote: "虎始交", weight: 20 },
+                { name: "雁北乡", rarity: "R", type: "季冬物候", desc: "大雁感知到阳气，开始向北飞。", quote: "雁北乡", weight: 20 },
+                { name: "羽音与咸味", rarity: "N", type: "五行属性", desc: "冬季属水，对应羽音与咸味。", quote: "其音羽...其味咸", weight: 40 },
+                { name: "祀行祭肾", rarity: "N", type: "祭祀制度", desc: "冬季祭行神（道路），祭品以肾脏为尊。", quote: "其祀行，祭先肾", weight: 40 }
+            ]
+        };
+
+        var allUniqueCards = [];
+        var cardNames = {}; // 记录名字防止重复
+        for (var season in gachaPools) {
+            var pool = gachaPools[season];
+            for (var i = 0; i < pool.length; i++) {
+                var card = pool[i];
+                if (!cardNames[card.name]) {
+                    allUniqueCards.push(card);
+                    cardNames[card.name] = true;
+                }
+            }
+        }
+        
+        var rarityOrder = { "UR": 1, "SSR": 2, "SR": 3, "R": 4, "N": 5 };
+        allUniqueCards.sort(function(a, b) {
+            return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        });
+
+        var inventory = {};
+        function loadInventory() {
+            try {
+                var savedData = localStorage.getItem('mingtang_inventory');
+                if (savedData) {
+                    inventory = JSON.parse(savedData);
+                }
+            } catch (e) {
+                inventory = {};
+            }
+        }
+
+        function saveInventory() {
+            try {
+                localStorage.setItem('mingtang_inventory', JSON.stringify(inventory));
+            } catch (e) {}
+        }
+
+        function updateTheme() {
+            var selector = document.getElementById('pool-selector');
+            var desc = document.getElementById('pool-desc');
+            var h1 = document.getElementById('main-title');
+            var val = selector.value;
+            
+            if (val === 'spring') {
+                desc.innerText = "🌸 当前卡池：万物复苏，东方青气极盛。UP神明：太皞、句芒。";
+                h1.style.color = "#8bc34a";
+            } else if (val === 'summer') {
+                desc.innerText = "☀️ 当前卡池：盛德在火，南方赤气极盛。包含【中央土】。UP神明：炎帝、黄帝。";
+                h1.style.color = "#ff5722";
+            } else if (val === 'autumn') {
+                desc.innerText = "🍁 当前卡池：天气肃杀，西方白气极盛。UP神明：少皞、蓐收。";
+                h1.style.color = "#fff";
+            } else if (val === 'winter') {
+                desc.innerText = "❄️ 当前卡池：万物闭藏，北方黑气极盛。UP神明：颛顼、玄冥。";
+                h1.style.color = "#03a9f4";
+            }
+        }
+
+        function toggleView(viewId) {
+            document.getElementById('gacha-view').style.display = 'none';
+            document.getElementById('wiki-view').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block';
+            
+            if(viewId === 'wiki-view') {
+                renderWiki();
+            }
+        }
+
+        function getRandomCard(poolName) {
+            var pool = gachaPools[poolName];
+            var totalWeight = 0;
+            for (var i = 0; i < pool.length; i++) {
+                totalWeight += pool[i].weight;
+            }
+            
+            var randomNum = Math.random() * totalWeight;
+            var weightSum = 0;
+            
+            for (var j = 0; j < pool.length; j++) {
+                weightSum += pool[j].weight;
+                if (randomNum <= weightSum) {
+                    return pool[j];
+                }
+            }
+            return pool[0]; // 兜底
+        }
+
+        function generateCardHTML(card, isWiki) {
+            var count = inventory[card.name] || 0;
+            var html = '<div class="card ' + card.rarity + ' ';
+            
+            if (isWiki) {
+                html += 'wiki-card ';
+                if (count === 0) {
+                    html += 'locked ';
+                }
+            }
+            html += '">';
+            
+            if (isWiki && count > 0) {
+                html += '<div class="count-badge">已收集: ' + count + '</div>';
+            }
+            if (isWiki && count === 0) {
+                html += '<div class="locked-text">🔒 未解锁</div>';
+            }
+            
+            html += '<div class="card-title">[' + card.rarity + '] ' + card.name + '</div>';
+            html += '<div class="card-type">🏷️ ' + card.type + '</div>';
+            html += '<div class="card-desc">' + card.desc + '</div>';
+            html += '<div class="card-quote">📜 "' + card.quote + '"</div>';
+            html += '</div>';
+            
+            return html;
+        }
+
+        function draw(times) {
+            toggleView('gacha-view');
+            var resultArea = document.getElementById('result-area');
+            var poolName = document.getElementById('pool-selector').value;
+            resultArea.innerHTML = ''; 
+
+            for (var i = 0; i < times; i++) {
+                var card = getRandomCard(poolName);
+                if (!inventory[card.name]) {
+                    inventory[card.name] = 0;
+                }
+                inventory[card.name]++;
+                resultArea.innerHTML += generateCardHTML(card, false);
+            }
+            saveInventory();
+        }
+
+        function renderWiki() {
+            var wikiArea = document.getElementById('wiki-area');
+            wikiArea.innerHTML = '';
+            var unlockedCount = 0;
+
+            for (var i = 0; i < allUniqueCards.length; i++) {
+                var card = allUniqueCards[i];
+                wikiArea.innerHTML += generateCardHTML(card, true);
+                if (inventory[card.name]) {
+                    unlockedCount++;
+                }
+            }
+
+            var totalCount = allUniqueCards.length;
+            document.getElementById('total-count').innerText = totalCount;
+            document.getElementById('collection-count').innerText = unlockedCount;
+            
+            var percentage = (unlockedCount / totalCount) * 100;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+        }
+
+        // 初始化：隐藏调试提示并绑定按钮事件
+        window.onload = function() {
+            document.getElementById('debug-status').style.display = 'none';
+            loadInventory();
+            updateTheme();
+            renderWiki();
+            
+            // 绑定事件
+            document.getElementById('pool-selector').onchange = updateTheme;
+            document.getElementById('btn-draw-1').onclick = function() { draw(1); };
+            document.getElementById('btn-draw-10').onclick = function() { draw(10); };
+            document.getElementById('btn-show-wiki').onclick = function() { toggleView('wiki-view'); };
+            document.getElementById('btn-show-gacha').onclick = function() { toggleView('gacha-view'); };
+            document.getElementById('btn-clear-save').onclick = function() {
+                if(confirm("确定要清空所有的收集进度吗？这无法撤销！")) {
+                    try { localStorage.removeItem('mingtang_inventory'); } catch (e) {}
+                    inventory = {};
+                    renderWiki();
+                    alert("已清空存档。");
+                }
+            };
+        };
+    </script>
+</body>
+</html>
