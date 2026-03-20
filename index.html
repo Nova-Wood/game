@@ -2,8 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>明堂司历 - 岁时抽卡模拟器 V9.0 (五十问扩充版)</title>
+    <title>明堂司历 - 岁时抽卡模拟器 V10.0 </title>
     <style>
+        /* 恢复极简流畅的纯色背景，去除了所有导致卡顿的图片和滤镜特效 */
         body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
         h1 { color: #8bc34a; transition: color 0.5s; text-align: center; }
         
@@ -125,7 +126,7 @@
     </div>
 
     <script>
-        // === 全新 50 题 真题库 ===
+        // 50道真题库
         var qaBank = [
             { q: "太史令，孟春之月，天子祭祀户神时，祭品中应以什么脏器为尊？", a: "祀户祭脾" },
             { q: "季冬之月，万物闭藏。天子会举行哪项盛大的年终祭祀，来合祭祖先与五祀神？", a: "腊先祖五祀" },
@@ -191,7 +192,7 @@
             "【冬行秋令】雪霜不时，小兵时起，土地侵削。"
         ];
 
-        // === 扩充卡池 ===
+        // 卡池数据
         var gachaPools = {
             spring: [
                 { name: "帝太皞", rarity: "UR", type: "春季天帝", desc: "主宰东方与春季的最高神明，五行属木。", quote: "其帝大皞", weight: 1 },
@@ -270,4 +271,264 @@
         var cardNames = {}; 
         for (var season in gachaPools) {
             var pool = gachaPools[season];
-            for (var i = 0; i < pool.length
+            for (var i = 0; i < pool.length; i++) {
+                var card = pool[i];
+                if (!cardNames[card.name]) {
+                    allUniqueCards.push(card);
+                    cardNames[card.name] = true;
+                }
+            }
+        }
+        
+        var rarityOrder = { "UR": 1, "SSR": 2, "SR": 3, "R": 4, "N": 5 };
+        allUniqueCards.sort(function(a, b) {
+            return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+        });
+
+        // 核心运行变量
+        var inventory = { score: 0 };
+        var currentQuestion = null;
+        var feedbackTimeout = null;
+
+        // 更新界面与官衔
+        function updateRankDisplay() {
+            var score = inventory.score || 0;
+            var rankName = "布衣学童";
+            var rankColor = "#9e9e9e";
+
+            if (score >= 1000) { rankName = "大宗伯"; rankColor = "#ff5722"; }
+            else if (score >= 600) { rankName = "太史令"; rankColor = "#ffc107"; }
+            else if (score >= 300) { rankName = "太史丞"; rankColor = "#9c27b0"; }
+            else if (score >= 100) { rankName = "司历官"; rankColor = "#03a9f4"; }
+            else if (score >= 50)  { rankName = "灵台郎"; rankColor = "#8bc34a"; }
+
+            var rankEl = document.getElementById('rank-display');
+            var oldRank = rankEl.innerText;
+            
+            rankEl.innerText = rankName;
+            rankEl.style.color = rankColor;
+            
+            if (oldRank !== "布衣学童" && oldRank !== rankName && score < getScoreThreshold(oldRank)) {
+                setTimeout(function() { alert("📉 警告！由于你频出纰漏，官职已被贬为【" + rankName + "】！"); }, 300);
+            }
+            document.getElementById('score-display').innerText = score;
+        }
+
+        function getScoreThreshold(rank) {
+            if (rank === "大宗伯") return 1000;
+            if (rank === "太史令") return 600;
+            if (rank === "太史丞") return 300;
+            if (rank === "司历官") return 100;
+            if (rank === "灵台郎") return 50;
+            return 0;
+        }
+
+        function loadInventory() {
+            try {
+                var savedData = localStorage.getItem('mingtang_inventory');
+                if (savedData) { 
+                    var parsed = JSON.parse(savedData);
+                    if (parsed) inventory = parsed; 
+                }
+            } catch (e) {
+                // 静默失败，防卡死
+            }
+            if (typeof inventory.score === 'undefined') { inventory.score = 0; }
+            updateRankDisplay();
+        }
+
+        function saveInventory() {
+            try {
+                localStorage.setItem('mingtang_inventory', JSON.stringify(inventory));
+            } catch (e) {
+                // 静默失败，防卡死
+            }
+            updateRankDisplay();
+        }
+
+        function generateNewQuestion() {
+            var randIndex = Math.floor(Math.random() * qaBank.length);
+            currentQuestion = qaBank[randIndex];
+            document.getElementById('question-text').innerText = currentQuestion.q;
+            document.getElementById('qa-feedback').className = ""; 
+        }
+
+        function triggerPunishmentShake() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('shake-effect');
+            void sidebar.offsetWidth; 
+            sidebar.classList.add('shake-effect');
+            setTimeout(function() { sidebar.classList.remove('shake-effect'); }, 400);
+        }
+
+        function showFeedbackHTML(htmlContent, isSuccess) {
+            var fbDiv = document.getElementById('qa-feedback');
+            fbDiv.innerHTML = htmlContent;
+            fbDiv.className = isSuccess ? 'feedback-success' : 'feedback-error';
+            
+            clearTimeout(feedbackTimeout);
+            var displayTime = isSuccess ? 1500 : 4000;
+            feedbackTimeout = setTimeout(function() { fbDiv.className = ""; }, displayTime);
+        }
+
+        // 处理卡牌点击 (修复渲染性能)
+        function handleCardClick(cardName) {
+            if (document.getElementById('wiki-view').style.display !== 'block') return;
+            
+            var count = inventory[cardName] || 0;
+            if (count === 0) {
+                showFeedbackHTML("❌ 此卡牌尚未解锁，无法提交！请先去明堂观星。", false);
+                return;
+            }
+
+            if (!currentQuestion) return;
+
+            if (cardName === currentQuestion.a) {
+                inventory.score += 20;
+                saveInventory();
+                showFeedbackHTML("✅ 回答正确！灵力 +20", true);
+                
+                if ([50, 100, 300, 600, 1000].indexOf(inventory.score) !== -1) {
+                    setTimeout(function() { alert("🎉 恭喜！你的官职获得了晋升！"); }, 500);
+                }
+                setTimeout(generateNewQuestion, 1500);
+            } else {
+                inventory.score = Math.max(0, inventory.score - 10); 
+                saveInventory();
+                triggerPunishmentShake();
+                
+                var randomDisaster = disasterBank[Math.floor(Math.random() * disasterBank.length)];
+                var errorMsg = "<b>❌ 逆天时之罚：扣除 10 点灵力！</b><br><br><span style='font-size: 13px; color: #ffab91;'>📜 天地异象：" + randomDisaster + "</span>";
+                
+                showFeedbackHTML(errorMsg, false);
+            }
+        }
+
+        function updateTheme() {
+            var selector = document.getElementById('pool-selector');
+            var desc = document.getElementById('pool-desc');
+            var h1 = document.getElementById('main-title');
+            var val = selector.value;
+            
+            if (val === 'spring') {
+                desc.innerText = "🌸 当前卡池：万物复苏，东方青气极盛。UP神明：太皞、句芒。";
+                h1.style.color = "#8bc34a";
+            } else if (val === 'summer') {
+                desc.innerText = "☀️ 当前卡池：盛德在火，南方赤气极盛。包含【中央土】。UP神明：炎帝、黄帝。";
+                h1.style.color = "#ff5722";
+            } else if (val === 'autumn') {
+                desc.innerText = "🍁 当前卡池：天气肃杀，西方白气极盛。UP神明：少皞、蓐收。";
+                h1.style.color = "#fff";
+            } else if (val === 'winter') {
+                desc.innerText = "❄️ 当前卡池：万物闭藏，北方黑气极盛。UP神明：颛顼、玄冥。";
+                h1.style.color = "#03a9f4";
+            }
+        }
+
+        function toggleView(viewId) {
+            document.getElementById('gacha-view').style.display = 'none';
+            document.getElementById('wiki-view').style.display = 'none';
+            document.getElementById(viewId).style.display = 'block';
+            if(viewId === 'wiki-view') { renderWiki(); }
+        }
+
+        function getRandomCard(poolName) {
+            var pool = gachaPools[poolName];
+            var totalWeight = 0;
+            for (var i = 0; i < pool.length; i++) { totalWeight += pool[i].weight; }
+            var randomNum = Math.random() * totalWeight;
+            var weightSum = 0;
+            for (var j = 0; j < pool.length; j++) {
+                weightSum += pool[j].weight;
+                if (randomNum <= weightSum) return pool[j];
+            }
+            return pool[0]; 
+        }
+
+        function generateCardHTML(card, isWiki) {
+            var count = inventory[card.name] || 0;
+            var isLocked = isWiki && count === 0;
+            var html = '<div class="card ' + card.rarity + ' ';
+            
+            if (isWiki) {
+                html += 'wiki-card ';
+                if (isLocked) html += 'locked ';
+            }
+            html += '" ';
+            
+            if (isWiki) { html += 'onclick="handleCardClick(\'' + card.name + '\')"'; }
+            html += '>';
+            
+            if (isWiki && count > 0) { html += '<div class="count-badge">已收集: ' + count + '</div>'; }
+            if (isWiki && count === 0) { html += '<div class="locked-text">🔒 未解锁</div>'; }
+            
+            html += '<div class="card-title">[' + card.rarity + '] ' + card.name + '</div>';
+            html += '<div class="card-type">🏷️ ' + card.type + '</div>';
+            html += '<div class="card-desc">' + card.desc + '</div>';
+            html += '<div class="card-quote">📜 "' + card.quote + '"</div>';
+            html += '</div>';
+            return html;
+        }
+
+        // 优化DOM渲染，解决连续抽卡和加载时的卡顿
+        function draw(times) {
+            toggleView('gacha-view');
+            var resultArea = document.getElementById('result-area');
+            var poolName = document.getElementById('pool-selector').value;
+            
+            var htmlContent = "";
+            for (var i = 0; i < times; i++) {
+                var card = getRandomCard(poolName);
+                if (!inventory[card.name]) { inventory[card.name] = 0; }
+                inventory[card.name]++;
+                htmlContent += generateCardHTML(card, false);
+            }
+            resultArea.innerHTML = htmlContent; 
+            saveInventory();
+        }
+
+        function renderWiki() {
+            var wikiArea = document.getElementById('wiki-area');
+            var unlockedCount = 0;
+            var htmlContent = "";
+
+            for (var i = 0; i < allUniqueCards.length; i++) {
+                var card = allUniqueCards[i];
+                htmlContent += generateCardHTML(card, true);
+                if (inventory[card.name]) { unlockedCount++; }
+            }
+            wikiArea.innerHTML = htmlContent;
+
+            var totalCount = allUniqueCards.length;
+            document.getElementById('total-count').innerText = totalCount;
+            document.getElementById('collection-count').innerText = unlockedCount;
+            
+            var percentage = (unlockedCount / totalCount) * 100;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+        }
+
+        window.onload = function() {
+            loadInventory();
+            updateTheme();
+            renderWiki();
+            generateNewQuestion();
+            
+            document.getElementById('pool-selector').onchange = updateTheme;
+            document.getElementById('btn-draw-1').onclick = function() { draw(1); };
+            document.getElementById('btn-draw-10').onclick = function() { draw(10); };
+            document.getElementById('btn-show-wiki').onclick = function() { toggleView('wiki-view'); };
+            document.getElementById('btn-show-gacha').onclick = function() { toggleView('gacha-view'); };
+            document.getElementById('btn-skip-question').onclick = generateNewQuestion;
+            document.getElementById('btn-clear-save').onclick = function() {
+                if(confirm("确定要清空所有的收集进度和灵力吗？这无法撤销！")) {
+                    try { localStorage.removeItem('mingtang_inventory'); } catch (e) {}
+                    inventory = { score: 0 };
+                    renderWiki();
+                    updateRankDisplay();
+                    alert("已清空进度，重新开始修行。");
+                }
+            };
+        };
+    </script>
+</body>
+</html>
