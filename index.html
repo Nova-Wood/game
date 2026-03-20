@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>明堂司历 - 岁时抽卡模拟器 V8.0</title>
+    <title>明堂司历 - 岁时抽卡模拟器 V9.0 (五十问扩充版)</title>
     <style>
         body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
         h1 { color: #8bc34a; transition: color 0.5s; text-align: center; }
@@ -21,7 +21,6 @@
         #main-content { flex: 3; background: #222; border-radius: 10px; padding: 20px; min-height: 600px; }
         #sidebar { flex: 1; background: #2c2c2c; border-radius: 10px; padding: 20px; border: 2px solid #555; position: sticky; top: 20px; text-align: center; transition: 0.1s; }
         
-        /* 震动动画：用于答错时的惩罚反馈 */
         @keyframes shake {
             0% { transform: translateX(0); border-color: #f44336; }
             25% { transform: translateX(-10px); }
@@ -126,6 +125,7 @@
     </div>
 
     <script>
+        // === 全新 50 题 真题库 ===
         var qaBank = [
             { q: "太史令，孟春之月，天子祭祀户神时，祭品中应以什么脏器为尊？", a: "祀户祭脾" },
             { q: "季冬之月，万物闭藏。天子会举行哪项盛大的年终祭祀，来合祭祖先与五祀神？", a: "腊先祖五祀" },
@@ -151,10 +151,35 @@
             { q: "仲冬之月，阴气极盛，阳气微动，哪一种猛兽开始交配？", a: "虎始交" },
             { q: "季夏之月，腐朽的草化作了夏夜的飞虫，这是什么物候？", a: "腐草为萤" },
             { q: "主宰中央的最高神明是黄帝，五行属土。那么对应他的天帝卡牌是？", a: "帝黄帝" },
-            { q: "春天冬眠的虫子开始苏醒，标志着孟春的到来，这叫什么？", a: "蛰虫始振" }
+            { q: "春天冬眠的虫子开始苏醒，标志着孟春的到来，这叫什么？", a: "蛰虫始振" },
+            { q: "春季天子乘坐的马车，驾苍龙，它的名字是什么？", a: "乘鸾路" },
+            { q: "春季天子适宜食用哪种谷物与家畜，以顺应木气？", a: "食麦与羊" },
+            { q: "仲春时节，黄鹂鸟开始鸣叫，这叫什么物候？", a: "仓庚鸣" },
+            { q: "春雷乍响，惊醒万物，这是仲春的哪个物候？", a: "雷乃发声" },
+            { q: "季春之月，天子向先帝进献黄色的礼服，这项仪式叫什么？", a: "荐鞠衣" },
+            { q: "孟春之月，天子率领三公九卿去往何处迎接春气？", a: "迎春于东郊" },
+            { q: "天子春季居于明堂东堂，这处宫室的名字叫什么？", a: "青阳大庙" },
+            { q: "夏季天子适宜食用哪种谷物与家禽，以顺应火气？", a: "食菽与鸡" },
+            { q: "孟夏时节，养蚕之事结束，后妃要进行什么大典？", a: "后妃献茧" },
+            { q: "仲夏时节，螳螂开始出现，这叫什么物候？", a: "螳蜋生" },
+            { q: "仲夏时节，鹿角开始脱落，这叫什么物候？", a: "鹿角解" },
+            { q: "季夏时节，命妇官染制郊庙祭祀之服，这叫什么大典？", a: "命妇官染采" },
+            { q: "中央属土，天子适宜食用哪种谷物与家畜？", a: "食稷与牛" },
+            { q: "秋季五行属金，主宰西方与秋季的最高神明是哪一位？", a: "帝少皞" },
+            { q: "秋季天子乘坐的马车，驾白骆，它的名字是什么？", a: "乘戎路" },
+            { q: "秋季天子适宜食用哪种谷物与家畜，以顺应金气？", a: "食麻与犬" },
+            { q: "孟秋时节，老鹰捕鸟后先陈列祭祀，这叫什么物候？", a: "鹰乃祭鸟" },
+            { q: "季秋时节，雀鸟潜入大水中变成蛤蜊，这叫什么物候？", a: "爵入大水为蛤" },
+            { q: "秋风送爽，白露开始降落。这是孟秋的哪个物候？", a: "凉风至" },
+            { q: "秋季天子居于明堂西堂，这处宫室的名字叫什么？", a: "总章大庙" },
+            { q: "冬季天子乘坐的马车，驾铁骊，它的名字是什么？", a: "乘玄路" },
+            { q: "冬季天子适宜食用哪种谷物与家畜，以顺应水气？", a: "食黍与彘" },
+            { q: "孟冬时节，彩虹隐藏不再出现，这叫什么物候？", a: "虹藏不见" },
+            { q: "孟冬时节，天子命有司审查丧葬的厚薄规格，这叫什么大典？", a: "审棺椁" },
+            { q: "大雁感知到阳气，开始向北飞，这是季冬的哪个物候？", a: "雁北乡" }
         ];
 
-        // 灾异题库（源自《礼记·月令》原文）
+        // 灾异题库
         var disasterBank = [
             "【春行夏令】雨水不时，草木蚤落，国时有恐。",
             "【春行秋令】其民大疫，猋风暴雨总至，藜莠蓬蒿并兴。",
@@ -165,3 +190,84 @@
             "【冬行春令】冻闭不密，地气上泄，民多流亡。",
             "【冬行秋令】雪霜不时，小兵时起，土地侵削。"
         ];
+
+        // === 扩充卡池 ===
+        var gachaPools = {
+            spring: [
+                { name: "帝太皞", rarity: "UR", type: "春季天帝", desc: "主宰东方与春季的最高神明，五行属木。", quote: "其帝大皞", weight: 1 },
+                { name: "神句芒", rarity: "UR", type: "春季佐神", desc: "太皞的辅佐神，掌管草木萌发。", quote: "其神句芒", weight: 2 },
+                { name: "迎春于东郊", rarity: "SSR", type: "国家大典", desc: "立春之日，天子率百官迎春气。", quote: "迎春于东郊", weight: 5 },
+                { name: "祠于高禖", rarity: "SSR", type: "国家大典", desc: "天子祭祀求子之神。", quote: "以大牢祠于高禖", weight: 5 },
+                { name: "后妃躬桑", rarity: "SSR", type: "国家大典", desc: "后妃斋戒，亲向东方采桑。", quote: "后妃齐戒，亲东乡躬桑", weight: 5 },
+                { name: "荐鞠衣", rarity: "SSR", type: "国家大典", desc: "天子向先帝进献黄色的礼服。", quote: "天子乃荐鞠衣于先帝", weight: 5 },
+                { name: "青阳大庙", rarity: "SR", type: "天子居所", desc: "天子春季居于明堂东堂。", quote: "天子居青阳大庙", weight: 12 },
+                { name: "乘鸾路", rarity: "SR", type: "天子仪仗", desc: "春季天子乘坐的马车，驾苍龙。", quote: "乘鸾路，驾仓龙", weight: 12 },
+                { name: "蛰虫始振", rarity: "R", type: "孟春物候", desc: "冬眠的虫子开始苏醒。", quote: "蛰虫始振", weight: 20 },
+                { name: "桃始华", rarity: "R", type: "仲春物候", desc: "桃花始开，带来春意。", quote: "桃始华", weight: 20 },
+                { name: "萍始生", rarity: "R", type: "季春物候", desc: "水面开始长出浮萍。", quote: "萍始生", weight: 20 },
+                { name: "仓庚鸣", rarity: "R", type: "仲春物候", desc: "黄鹂鸟开始鸣叫。", quote: "仓庚鸣", weight: 20 },
+                { name: "雷乃发声", rarity: "R", type: "仲春物候", desc: "春雷乍响，惊醒万物。", quote: "雷乃发声", weight: 20 },
+                { name: "角音与酸味", rarity: "N", type: "五行属性", desc: "春季属木，对应角音与酸味。", quote: "其音角...其味酸", weight: 40 },
+                { name: "祀户祭脾", rarity: "N", type: "祭祀制度", desc: "春季祭户神，祭品以脾脏为尊。", quote: "其祀户，祭先脾", weight: 40 },
+                { name: "食麦与羊", rarity: "N", type: "饮食制度", desc: "春季天子适宜食用的食物。", quote: "食麦与羊", weight: 40 }
+            ],
+            summer: [
+                { name: "帝炎帝", rarity: "UR", type: "夏季天帝", desc: "主宰南方与夏季的最高神。", quote: "其帝炎帝", weight: 1 },
+                { name: "神祝融", rarity: "UR", type: "夏季佐神", desc: "炎帝的辅佐神，掌管生长与火。", quote: "其神祝融", weight: 2 },
+                { name: "帝黄帝", rarity: "UR", type: "中央天帝", desc: "主宰中央的最高神明，五行属土。", quote: "其帝黄帝", weight: 1 },
+                { name: "神后土", rarity: "UR", type: "中央佐神", desc: "大地之母，黄帝的辅佐神。", quote: "其神后土", weight: 2 },
+                { name: "迎夏于南郊", rarity: "SSR", type: "国家大典", desc: "立夏之日，天子率百官迎夏气。", quote: "迎夏于南郊", weight: 5 },
+                { name: "大雩帝", rarity: "SSR", type: "仲夏大典", desc: "仲夏举行盛大音乐祭祀祈雨。", quote: "大雩帝，用盛乐", weight: 5 },
+                { name: "后妃献茧", rarity: "SSR", type: "国家大典", desc: "养蚕之事结束，后妃献上蚕茧。", quote: "蚕事毕，后妃献茧", weight: 5 },
+                { name: "命妇官染采", rarity: "SSR", type: "国家大典", desc: "命妇官染制郊庙祭祀之服。", quote: "命妇官染采，黼黻文章", weight: 5 },
+                { name: "明堂太庙", rarity: "SR", type: "天子居所", desc: "天子夏季居于明堂南堂。", quote: "天子居明堂太庙", weight: 12 },
+                { name: "苦菜秀", rarity: "R", type: "孟夏物候", desc: "苦菜在田野中开花茂盛。", quote: "苦菜秀", weight: 20 },
+                { name: "腐草为萤", rarity: "R", type: "季夏物候", desc: "腐朽的草化作了夏夜的萤火虫。", quote: "腐草为萤", weight: 20 },
+                { name: "螳蜋生", rarity: "R", type: "仲夏物候", desc: "螳螂开始出现。", quote: "螳蜋生", weight: 20 },
+                { name: "鹿角解", rarity: "R", type: "仲夏物候", desc: "鹿角开始脱落。", quote: "鹿角解", weight: 20 },
+                { name: "祀灶祭肺", rarity: "N", type: "祭祀制度", desc: "夏季祭灶神，祭品以肺脏为尊。", quote: "其祀灶，祭先肺", weight: 40 },
+                { name: "宫音与甘味", rarity: "N", type: "五行属性", desc: "中央属土，对应宫音与甜味。", quote: "其音宫...其味甘", weight: 40 },
+                { name: "食菽与鸡", rarity: "N", type: "饮食制度", desc: "夏季天子适宜食用的食物。", quote: "食菽与鸡", weight: 40 },
+                { name: "食稷与牛", rarity: "N", type: "饮食制度", desc: "中央土对应的食物。", quote: "食稷与牛", weight: 40 }
+            ],
+            autumn: [
+                { name: "帝少皞", rarity: "UR", type: "秋季天帝", desc: "主宰西方与秋季的最高神明，五行属金。", quote: "其帝少皞", weight: 1 },
+                { name: "神蓐收", rarity: "UR", type: "秋季佐神", desc: "少皞的辅佐神，掌管秋之肃杀。", quote: "其神蓐收", weight: 2 },
+                { name: "迎秋于西郊", rarity: "SSR", type: "国家大典", desc: "立秋之日，天子率百官迎秋气。", quote: "迎秋于西郊", weight: 5 },
+                { name: "授几杖", rarity: "SSR", type: "仲秋大典", desc: "赡养衰老之人，赐予手杖。", quote: "养衰老，授几杖", weight: 5 },
+                { name: "教于田猎", rarity: "SSR", type: "季秋大典", desc: "天子教习田猎，演练五种兵器。", quote: "教于田猎，以习五戎", weight: 5 },
+                { name: "总章大庙", rarity: "SR", type: "天子居所", desc: "天子秋季居于明堂西堂。", quote: "天子居总章大庙", weight: 12 },
+                { name: "乘戎路", rarity: "SR", type: "天子仪仗", desc: "秋季天子乘坐的马车，驾白骆。", quote: "乘戎路，驾白骆", weight: 12 },
+                { name: "凉风至", rarity: "R", type: "孟秋物候", desc: "秋风送爽，白露开始降落。", quote: "凉风至，白露降", weight: 20 },
+                { name: "玄鸟归", rarity: "R", type: "仲秋物候", desc: "燕子开始向南方迁徙归去。", quote: "玄鸟归", weight: 20 },
+                { name: "鞠有黄华", rarity: "R", type: "季秋物候", desc: "菊花开出黄色的花朵。", quote: "鞠有黄华", weight: 20 },
+                { name: "鹰乃祭鸟", rarity: "R", type: "孟秋物候", desc: "老鹰捕鸟后先陈列祭祀。", quote: "鹰乃祭鸟，用始行戮", weight: 20 },
+                { name: "爵入大水为蛤", rarity: "R", type: "季秋物候", desc: "雀鸟潜入大水变成蛤蜊。", quote: "爵入大水为蛤", weight: 20 },
+                { name: "商音与辛味", rarity: "N", type: "五行属性", desc: "秋季属金，对应商音与辛味（辣）。", quote: "其音商...其味辛", weight: 40 },
+                { name: "祀门祭肝", rarity: "N", type: "祭祀制度", desc: "秋季祭门神，祭品以肝脏为尊。", quote: "其祀门，祭先肝", weight: 40 },
+                { name: "食麻与犬", rarity: "N", type: "饮食制度", desc: "秋季天子适宜食用的食物。", quote: "食麻与犬", weight: 40 }
+            ],
+            winter: [
+                { name: "帝颛顼", rarity: "UR", type: "冬季天帝", desc: "主宰北方与冬季的最高神明，五行属水。", quote: "其帝颛顼", weight: 1 },
+                { name: "神玄冥", rarity: "UR", type: "冬季佐神", desc: "颛顼的辅佐神，掌管冬之闭藏。", quote: "其神玄冥", weight: 2 },
+                { name: "迎冬于北郊", rarity: "SSR", type: "国家大典", desc: "立冬之日，天子率百官迎冬气。", quote: "迎冬于北郊", weight: 5 },
+                { name: "恤孤寡", rarity: "SSR", type: "国家大典", desc: "赏赐为国牺牲者，抚恤孤儿寡母。", quote: "赏死事，恤孤寡", weight: 5 },
+                { name: "腊先祖五祀", rarity: "SSR", type: "季冬大典", desc: "年终大祭，合祭祖先与五祀神。", quote: "腊先祖五祀", weight: 5 },
+                { name: "审棺椁", rarity: "SSR", type: "国家大典", desc: "审查丧葬的厚薄规格。", quote: "审棺椁之薄厚", weight: 5 },
+                { name: "玄堂大庙", rarity: "SR", type: "天子居所", desc: "天子冬季居于明堂北堂（玄堂）。", quote: "天子居玄堂大庙", weight: 12 },
+                { name: "乘玄路", rarity: "SR", type: "天子仪仗", desc: "冬季天子乘坐的马车，驾铁骊。", quote: "乘玄路，驾铁骊", weight: 12 },
+                { name: "水始冰", rarity: "R", type: "孟冬物候", desc: "水面开始结冰，大地冻结。", quote: "水始冰，地始冻", weight: 20 },
+                { name: "虎始交", rarity: "R", type: "仲冬物候", desc: "阴气极盛，阳气微动，老虎开始交配。", quote: "虎始交", weight: 20 },
+                { name: "雁北乡", rarity: "R", type: "季冬物候", desc: "大雁感知到阳气，开始向北飞。", quote: "雁北乡", weight: 20 },
+                { name: "虹藏不见", rarity: "R", type: "孟冬物候", desc: "彩虹隐藏不再出现。", quote: "虹藏不见", weight: 20 },
+                { name: "羽音与咸味", rarity: "N", type: "五行属性", desc: "冬季属水，对应羽音与咸味。", quote: "其音羽...其味咸", weight: 40 },
+                { name: "祀行祭肾", rarity: "N", type: "祭祀制度", desc: "冬季祭行神（道路），祭品以肾脏为尊。", quote: "其祀行，祭先肾", weight: 40 },
+                { name: "食黍与彘", rarity: "N", type: "饮食制度", desc: "冬季天子适宜食用的食物。", quote: "食黍与彘", weight: 40 }
+            ]
+        };
+
+        var allUniqueCards = [];
+        var cardNames = {}; 
+        for (var season in gachaPools) {
+            var pool = gachaPools[season];
+            for (var i = 0; i < pool.length
