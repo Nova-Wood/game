@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>明堂司历 - 岁时抽卡模拟器 V7.0</title>
+    <title>明堂司历 - 岁时抽卡模拟器 V8.0</title>
     <style>
         body { font-family: 'Microsoft YaHei', sans-serif; background-color: #1a1a1a; color: #eee; margin: 0; padding: 20px; }
         h1 { color: #8bc34a; transition: color 0.5s; text-align: center; }
@@ -19,17 +19,27 @@
         
         #game-layout { display: flex; max-width: 1300px; margin: 0 auto; gap: 20px; align-items: flex-start; }
         #main-content { flex: 3; background: #222; border-radius: 10px; padding: 20px; min-height: 600px; }
-        #sidebar { flex: 1; background: #2c2c2c; border-radius: 10px; padding: 20px; border: 2px solid #555; position: sticky; top: 20px; text-align: center; }
+        #sidebar { flex: 1; background: #2c2c2c; border-radius: 10px; padding: 20px; border: 2px solid #555; position: sticky; top: 20px; text-align: center; transition: 0.1s; }
         
-        .score-board { font-size: 18px; color: #fff; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed #555; line-height: 1.8; }
-        .score-val { color: #ffeb3b; font-weight: bold; font-size: 22px; }
-        .rank-val { font-weight: bold; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        /* 震动动画：用于答错时的惩罚反馈 */
+        @keyframes shake {
+            0% { transform: translateX(0); border-color: #f44336; }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); border-color: #555; }
+        }
+        .shake-effect { animation: shake 0.4s ease-in-out; border-color: #f44336 !important; background-color: #3a1c1c !important; }
+        
+        .score-board { font-size: 18px; color: #fff; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed #555; line-height: 1.8; transition: 0.3s; }
+        .score-val { color: #ffeb3b; font-weight: bold; font-size: 22px; transition: color 0.3s; }
+        .rank-val { font-weight: bold; font-size: 24px; text-shadow: 0 0 10px rgba(255,255,255,0.2); transition: color 0.3s; }
         
         .question-box { background: #1a1a1a; padding: 15px; border-radius: 8px; border-left: 4px solid #8bc34a; font-size: 16px; line-height: 1.5; margin-bottom: 15px; text-align: left; }
         .qa-tip { font-size: 12px; color: #aaa; margin-bottom: 15px; }
-        #qa-feedback { min-height: 24px; font-weight: bold; margin-top: 10px; }
-        .feedback-success { color: #4caf50; }
-        .feedback-error { color: #f44336; }
+        #qa-feedback { min-height: 40px; font-weight: bold; margin-top: 15px; font-size: 14px; text-align: left; padding: 10px; border-radius: 5px; display: none; }
+        .feedback-success { background-color: rgba(76, 175, 80, 0.2); border-left: 4px solid #4caf50; color: #8bc34a; display: block !important; }
+        .feedback-error { background-color: rgba(244, 67, 54, 0.2); border-left: 4px solid #f44336; color: #ff8a80; display: block !important; }
 
         .view-section { display: none; }
         .view-section.active { display: block; text-align: center; }
@@ -90,7 +100,7 @@
                 <div class="progress-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
-                <div style="color: #8bc34a; font-size: 14px; margin-bottom: 10px;">💡 提示：在面临提问时，点击已点亮的卡牌即可提交答案！</div>
+                <div style="color: #8bc34a; font-size: 14px; margin-bottom: 10px;">💡 提示：在面临提问时，点击已点亮的卡牌即可提交答案！答错会降职哦！</div>
                 <button id="btn-clear-save" class="btn-clear">⚠️ 清空游戏进度</button>
                 <div id="wiki-area" class="card-grid"></div>
             </div>
@@ -116,7 +126,6 @@
     </div>
 
     <script>
-        // === 1. 全新扩充题库 (25题) ===
         var qaBank = [
             { q: "太史令，孟春之月，天子祭祀户神时，祭品中应以什么脏器为尊？", a: "祀户祭脾" },
             { q: "季冬之月，万物闭藏。天子会举行哪项盛大的年终祭祀，来合祭祖先与五祀神？", a: "腊先祖五祀" },
@@ -145,304 +154,14 @@
             { q: "春天冬眠的虫子开始苏醒，标志着孟春的到来，这叫什么？", a: "蛰虫始振" }
         ];
 
-        // === 2. 卡池数据 ===
-        var gachaPools = {
-            spring: [
-                { name: "帝太皞", rarity: "UR", type: "春季天帝", desc: "主宰东方与春季的最高神明，五行属木。", quote: "其帝大皞", weight: 1 },
-                { name: "神句芒", rarity: "UR", type: "春季佐神", desc: "太皞的辅佐神，掌管草木萌发。", quote: "其神句芒", weight: 2 },
-                { name: "迎春于东郊", rarity: "SSR", type: "国家大典", desc: "立春之日，天子率百官迎春气。", quote: "迎春于东郊", weight: 5 },
-                { name: "祠于高禖", rarity: "SSR", type: "国家大典", desc: "天子祭祀求子之神。", quote: "以大牢祠于高禖", weight: 5 },
-                { name: "后妃躬桑", rarity: "SSR", type: "国家大典", desc: "后妃斋戒，亲向东方采桑。", quote: "后妃齐戒，亲东乡躬桑", weight: 5 },
-                { name: "青阳大庙", rarity: "SR", type: "天子居所", desc: "天子春季居于明堂东堂。", quote: "天子居青阳大庙", weight: 12 },
-                { name: "蛰虫始振", rarity: "R", type: "孟春物候", desc: "冬眠的虫子开始苏醒。", quote: "蛰虫始振", weight: 20 },
-                { name: "桃始华", rarity: "R", type: "仲春物候", desc: "桃花始开，带来春意。", quote: "桃始华", weight: 20 },
-                { name: "萍始生", rarity: "R", type: "季春物候", desc: "水面开始长出浮萍。", quote: "萍始生", weight: 20 },
-                { name: "角音与酸味", rarity: "N", type: "五行属性", desc: "春季属木，对应角音与酸味。", quote: "其音角...其味酸", weight: 40 },
-                { name: "祀户祭脾", rarity: "N", type: "祭祀制度", desc: "春季祭户神，祭品以脾脏为尊。", quote: "其祀户，祭先脾", weight: 40 }
-            ],
-            summer: [
-                { name: "帝炎帝", rarity: "UR", type: "夏季天帝", desc: "主宰南方与夏季的最高神。", quote: "其帝炎帝", weight: 1 },
-                { name: "神祝融", rarity: "UR", type: "夏季佐神", desc: "炎帝的辅佐神，掌管生长与火。", quote: "其神祝融", weight: 2 },
-                { name: "帝黄帝", rarity: "UR", type: "中央天帝", desc: "主宰中央的最高神明，五行属土。", quote: "其帝黄帝", weight: 1 },
-                { name: "神后土", rarity: "UR", type: "中央佐神", desc: "大地之母，黄帝的辅佐神。", quote: "其神后土", weight: 2 },
-                { name: "迎夏于南郊", rarity: "SSR", type: "国家大典", desc: "立夏之日，天子率百官迎夏气。", quote: "迎夏于南郊", weight: 5 },
-                { name: "大雩帝", rarity: "SSR", type: "仲夏大典", desc: "仲夏举行盛大音乐祭祀祈雨。", quote: "大雩帝，用盛乐", weight: 5 },
-                { name: "明堂太庙", rarity: "SR", type: "天子居所", desc: "天子夏季居于明堂南堂。", quote: "天子居明堂太庙", weight: 12 },
-                { name: "苦菜秀", rarity: "R", type: "孟夏物候", desc: "苦菜在田野中开花茂盛。", quote: "苦菜秀", weight: 20 },
-                { name: "腐草为萤", rarity: "R", type: "季夏物候", desc: "腐朽的草化作了夏夜的萤火虫。", quote: "腐草为萤", weight: 20 },
-                { name: "祀灶祭肺", rarity: "N", type: "祭祀制度", desc: "夏季祭灶神，祭品以肺脏为尊。", quote: "其祀灶，祭先肺", weight: 40 },
-                { name: "宫音与甘味", rarity: "N", type: "五行属性", desc: "中央属土，对应宫音与甜味。", quote: "其音宫...其味甘", weight: 40 }
-            ],
-            autumn: [
-                { name: "帝少皞", rarity: "UR", type: "秋季天帝", desc: "主宰西方与秋季的最高神明，五行属金。", quote: "其帝少皞", weight: 1 },
-                { name: "神蓐收", rarity: "UR", type: "秋季佐神", desc: "少皞的辅佐神，掌管秋之肃杀。", quote: "其神蓐收", weight: 2 },
-                { name: "迎秋于西郊", rarity: "SSR", type: "国家大典", desc: "立秋之日，天子率百官迎秋气。", quote: "迎秋于西郊", weight: 5 },
-                { name: "授几杖", rarity: "SSR", type: "仲秋大典", desc: "赡养衰老之人，赐予手杖。", quote: "养衰老，授几杖", weight: 5 },
-                { name: "教于田猎", rarity: "SSR", type: "季秋大典", desc: "天子教习田猎，演练五种兵器。", quote: "教于田猎，以习五戎", weight: 5 },
-                { name: "总章大庙", rarity: "SR", type: "天子居所", desc: "天子秋季居于明堂西堂。", quote: "天子居总章大庙", weight: 12 },
-                { name: "凉风至", rarity: "R", type: "孟秋物候", desc: "秋风送爽，白露开始降落。", quote: "凉风至，白露降", weight: 20 },
-                { name: "玄鸟归", rarity: "R", type: "仲秋物候", desc: "燕子开始向南方迁徙归去。", quote: "玄鸟归", weight: 20 },
-                { name: "鞠有黄华", rarity: "R", type: "季秋物候", desc: "菊花开出黄色的花朵。", quote: "鞠有黄华", weight: 20 },
-                { name: "商音与辛味", rarity: "N", type: "五行属性", desc: "秋季属金，对应商音与辛味（辣）。", quote: "其音商...其味辛", weight: 40 },
-                { name: "祀门祭肝", rarity: "N", type: "祭祀制度", desc: "秋季祭门神，祭品以肝脏为尊。", quote: "其祀门，祭先肝", weight: 40 }
-            ],
-            winter: [
-                { name: "帝颛顼", rarity: "UR", type: "冬季天帝", desc: "主宰北方与冬季的最高神明，五行属水。", quote: "其帝颛顼", weight: 1 },
-                { name: "神玄冥", rarity: "UR", type: "冬季佐神", desc: "颛顼的辅佐神，掌管冬之闭藏。", quote: "其神玄冥", weight: 2 },
-                { name: "迎冬于北郊", rarity: "SSR", type: "国家大典", desc: "立冬之日，天子率百官迎冬气。", quote: "迎冬于北郊", weight: 5 },
-                { name: "恤孤寡", rarity: "SSR", type: "国家大典", desc: "赏赐为国牺牲者，抚恤孤儿寡母。", quote: "赏死事，恤孤寡", weight: 5 },
-                { name: "腊先祖五祀", rarity: "SSR", type: "季冬大典", desc: "年终大祭，合祭祖先与五祀神。", quote: "腊先祖五祀", weight: 5 },
-                { name: "玄堂大庙", rarity: "SR", type: "天子居所", desc: "天子冬季居于明堂北堂（玄堂）。", quote: "天子居玄堂大庙", weight: 12 },
-                { name: "水始冰", rarity: "R", type: "孟冬物候", desc: "水面开始结冰，大地冻结。", quote: "水始冰，地始冻", weight: 20 },
-                { name: "虎始交", rarity: "R", type: "仲冬物候", desc: "阴气极盛，阳气微动，老虎开始交配。", quote: "虎始交", weight: 20 },
-                { name: "雁北乡", rarity: "R", type: "季冬物候", desc: "大雁感知到阳气，开始向北飞。", quote: "雁北乡", weight: 20 },
-                { name: "羽音与咸味", rarity: "N", type: "五行属性", desc: "冬季属水，对应羽音与咸味。", quote: "其音羽...其味咸", weight: 40 },
-                { name: "祀行祭肾", rarity: "N", type: "祭祀制度", desc: "冬季祭行神（道路），祭品以肾脏为尊。", quote: "其祀行，祭先肾", weight: 40 }
-            ]
-        };
-
-        var allUniqueCards = [];
-        var cardNames = {}; 
-        for (var season in gachaPools) {
-            var pool = gachaPools[season];
-            for (var i = 0; i < pool.length; i++) {
-                var card = pool[i];
-                if (!cardNames[card.name]) {
-                    allUniqueCards.push(card);
-                    cardNames[card.name] = true;
-                }
-            }
-        }
-        
-        var rarityOrder = { "UR": 1, "SSR": 2, "SR": 3, "R": 4, "N": 5 };
-        allUniqueCards.sort(function(a, b) {
-            return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-        });
-
-        // === 3. 游戏存档与状态 ===
-        var inventory = {};
-        var currentQuestion = null;
-        var feedbackTimeout = null;
-
-        function updateRankDisplay() {
-            var score = inventory.score || 0;
-            var rankName = "布衣学童";
-            var rankColor = "#9e9e9e";
-
-            if (score >= 1000) { rankName = "大宗伯"; rankColor = "#ff5722"; } // UR级
-            else if (score >= 600) { rankName = "太史令"; rankColor = "#ffc107"; } // SSR级
-            else if (score >= 300) { rankName = "太史丞"; rankColor = "#9c27b0"; } // SR级
-            else if (score >= 100) { rankName = "司历官"; rankColor = "#03a9f4"; } // R级
-            else if (score >= 50)  { rankName = "灵台郎"; rankColor = "#8bc34a"; } // 见习级
-
-            var rankEl = document.getElementById('rank-display');
-            rankEl.innerText = rankName;
-            rankEl.style.color = rankColor;
-            document.getElementById('score-display').innerText = score;
-        }
-
-        function loadInventory() {
-            try {
-                var savedData = localStorage.getItem('mingtang_inventory');
-                if (savedData) {
-                    inventory = JSON.parse(savedData);
-                }
-                if (typeof inventory.score === 'undefined') {
-                    inventory.score = 0;
-                }
-                updateRankDisplay();
-            } catch (e) {
-                inventory = { score: 0 };
-            }
-        }
-
-        function saveInventory() {
-            try {
-                localStorage.setItem('mingtang_inventory', JSON.stringify(inventory));
-                updateRankDisplay();
-            } catch (e) {}
-        }
-
-        // === 4. 问答核心逻辑 ===
-        function generateNewQuestion() {
-            var randIndex = Math.floor(Math.random() * qaBank.length);
-            currentQuestion = qaBank[randIndex];
-            document.getElementById('question-text').innerText = currentQuestion.q;
-            document.getElementById('qa-feedback').innerText = "";
-        }
-
-        function showFeedback(msg, isSuccess) {
-            var fbDiv = document.getElementById('qa-feedback');
-            fbDiv.innerText = msg;
-            fbDiv.className = isSuccess ? 'feedback-success' : 'feedback-error';
-            
-            clearTimeout(feedbackTimeout);
-            feedbackTimeout = setTimeout(function() {
-                fbDiv.innerText = "";
-            }, 3000);
-        }
-
-        function handleCardClick(cardName, isLocked) {
-            if (document.getElementById('wiki-view').style.display !== 'block') return;
-            
-            if (isLocked) {
-                showFeedback("❌ 此卡牌尚未解锁，无法提交！请先去明堂观星。", false);
-                return;
-            }
-
-            if (!currentQuestion) return;
-
-            if (cardName === currentQuestion.a) {
-                inventory.score += 20;
-                saveInventory();
-                showFeedback("✅ 回答正确！灵力 +20", true);
-                
-                // 检查是否升级并弹窗祝贺 (可选的小彩蛋)
-                if ([50, 100, 300, 600, 1000].indexOf(inventory.score) !== -1) {
-                    setTimeout(function() { alert("🎉 恭喜！你的官职获得了晋升！"); }, 500);
-                }
-
-                setTimeout(generateNewQuestion, 1500);
-            } else {
-                showFeedback("❌ 答案不对哦，太史令请再仔细想想，或者看看卡牌描述。", false);
-            }
-        }
-
-        // === 5. UI 渲染与交互 ===
-        function updateTheme() {
-            var selector = document.getElementById('pool-selector');
-            var desc = document.getElementById('pool-desc');
-            var h1 = document.getElementById('main-title');
-            var val = selector.value;
-            
-            if (val === 'spring') {
-                desc.innerText = "🌸 当前卡池：万物复苏，东方青气极盛。UP神明：太皞、句芒。";
-                h1.style.color = "#8bc34a";
-            } else if (val === 'summer') {
-                desc.innerText = "☀️ 当前卡池：盛德在火，南方赤气极盛。包含【中央土】。UP神明：炎帝、黄帝。";
-                h1.style.color = "#ff5722";
-            } else if (val === 'autumn') {
-                desc.innerText = "🍁 当前卡池：天气肃杀，西方白气极盛。UP神明：少皞、蓐收。";
-                h1.style.color = "#fff";
-            } else if (val === 'winter') {
-                desc.innerText = "❄️ 当前卡池：万物闭藏，北方黑气极盛。UP神明：颛顼、玄冥。";
-                h1.style.color = "#03a9f4";
-            }
-        }
-
-        function toggleView(viewId) {
-            document.getElementById('gacha-view').style.display = 'none';
-            document.getElementById('wiki-view').style.display = 'none';
-            document.getElementById(viewId).style.display = 'block';
-            
-            if(viewId === 'wiki-view') {
-                renderWiki();
-            }
-        }
-
-        function getRandomCard(poolName) {
-            var pool = gachaPools[poolName];
-            var totalWeight = 0;
-            for (var i = 0; i < pool.length; i++) { totalWeight += pool[i].weight; }
-            var randomNum = Math.random() * totalWeight;
-            var weightSum = 0;
-            for (var j = 0; j < pool.length; j++) {
-                weightSum += pool[j].weight;
-                if (randomNum <= weightSum) return pool[j];
-            }
-            return pool[0]; 
-        }
-
-        function generateCardHTML(card, isWiki) {
-            var count = inventory[card.name] || 0;
-            var isLocked = isWiki && count === 0;
-            var html = '<div class="card ' + card.rarity + ' ';
-            
-            if (isWiki) {
-                html += 'wiki-card ';
-                if (isLocked) html += 'locked ';
-            }
-            html += '" data-name="' + card.name + '" ';
-            
-            if (isWiki) {
-                html += 'onclick="handleCardClick(\'' + card.name + '\', ' + isLocked + ')"';
-            }
-            
-            html += '>';
-            
-            if (isWiki && count > 0) {
-                html += '<div class="count-badge">已收集: ' + count + '</div>';
-            }
-            if (isWiki && count === 0) {
-                html += '<div class="locked-text">🔒 未解锁</div>';
-            }
-            
-            html += '<div class="card-title">[' + card.rarity + '] ' + card.name + '</div>';
-            html += '<div class="card-type">🏷️ ' + card.type + '</div>';
-            html += '<div class="card-desc">' + card.desc + '</div>';
-            html += '<div class="card-quote">📜 "' + card.quote + '"</div>';
-            html += '</div>';
-            
-            return html;
-        }
-
-        function draw(times) {
-            toggleView('gacha-view');
-            var resultArea = document.getElementById('result-area');
-            var poolName = document.getElementById('pool-selector').value;
-            resultArea.innerHTML = ''; 
-
-            for (var i = 0; i < times; i++) {
-                var card = getRandomCard(poolName);
-                if (!inventory[card.name]) { inventory[card.name] = 0; }
-                inventory[card.name]++;
-                resultArea.innerHTML += generateCardHTML(card, false);
-            }
-            saveInventory();
-        }
-
-        function renderWiki() {
-            var wikiArea = document.getElementById('wiki-area');
-            wikiArea.innerHTML = '';
-            var unlockedCount = 0;
-
-            for (var i = 0; i < allUniqueCards.length; i++) {
-                var card = allUniqueCards[i];
-                wikiArea.innerHTML += generateCardHTML(card, true);
-                if (inventory[card.name]) { unlockedCount++; }
-            }
-
-            var totalCount = allUniqueCards.length;
-            document.getElementById('total-count').innerText = totalCount;
-            document.getElementById('collection-count').innerText = unlockedCount;
-            
-            var percentage = (unlockedCount / totalCount) * 100;
-            document.getElementById('progress-bar').style.width = percentage + '%';
-        }
-
-        // 初始化
-        window.onload = function() {
-            loadInventory();
-            updateTheme();
-            renderWiki();
-            generateNewQuestion();
-            
-            document.getElementById('pool-selector').onchange = updateTheme;
-            document.getElementById('btn-draw-1').onclick = function() { draw(1); };
-            document.getElementById('btn-draw-10').onclick = function() { draw(10); };
-            document.getElementById('btn-show-wiki').onclick = function() { toggleView('wiki-view'); };
-            document.getElementById('btn-show-gacha').onclick = function() { toggleView('gacha-view'); };
-            document.getElementById('btn-skip-question').onclick = generateNewQuestion;
-            document.getElementById('btn-clear-save').onclick = function() {
-                if(confirm("确定要清空所有的收集进度和灵力吗？这无法撤销！")) {
-                    try { localStorage.removeItem('mingtang_inventory'); } catch (e) {}
-                    inventory = { score: 0 };
-                    renderWiki();
-                    updateRankDisplay();
-                    alert("已清空进度，重新开始修行。");
-                }
-            };
-        };
-    </script>
-</body>
-</html>
+        // 灾异题库（源自《礼记·月令》原文）
+        var disasterBank = [
+            "【春行夏令】雨水不时，草木蚤落，国时有恐。",
+            "【春行秋令】其民大疫，猋风暴雨总至，藜莠蓬蒿并兴。",
+            "【夏行冬令】草木蚤枯，后乃大水，败其城郭。",
+            "【夏行春令】蝗虫为灾，暴风来格，秀草不实。",
+            "【秋行冬令】阴气大胜，介虫败谷，戎兵乃来。",
+            "【秋行夏令】国多火灾，寒热不节，民多疟疾。",
+            "【冬行春令】冻闭不密，地气上泄，民多流亡。",
+            "【冬行秋令】雪霜不时，小兵时起，土地侵削。"
+        ];
